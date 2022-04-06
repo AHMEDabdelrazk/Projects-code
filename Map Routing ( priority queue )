@@ -1,0 +1,283 @@
+/***************************************************************
+*    1 - Auther : Ahmed Abdel Razik Ramadan                    *
+*    2 - project name  / Map_Routing /                         *
+*    3 - description   / gevin a start position of a customer  *
+*        recognize the start vertice and last vertice to start *
+*        the map routing using dijekstra                       *
+*    4 - Data structure ( piriorty qeueu )                     *
+*          push = O(log n )/pop = O(1)                         *
+*    5 - O(E log n ) 
+****************************************************************/
+
+
+
+
+//******************** Liberarys *******************************
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <math.h>
+#include <vector>
+#include <map>
+#include <queue>
+#include <list>
+#include <string>
+#include <unordered_map>
+//**************************************************************
+
+
+
+
+//**************************************************************
+#define OO  1000000000
+using namespace std;
+//**************************************************************
+
+
+
+
+//******************** functions *******************************
+
+// for absolute value
+double Abs(double X) {
+	if (X < 0)
+		X *= (-1);
+	return X;
+}
+//**************************************************************
+
+
+
+
+//********************** class *********************************
+class Graph {
+public:
+	// piriorty queue to extract minimam for dijecstra 
+	std::priority_queue<pair<double, int>, std::vector<pair<double, int>>, std::greater<pair<double, int>>> Pirority_Q;
+	
+	// adjacency list to build graph 
+	vector<vector<pair<int, double>>> adj ;
+	int mx = -1;
+
+	// all destance
+	vector<int > dist;
+
+	// function to add an edge to graph
+	void addEdge(int u ,int v, double w);
+
+	//  v is the start point
+	void Dijkstra(int v,int end);
+};
+
+
+//______________________________________________________________
+
+
+void Graph::addEdge(int u ,int v, double w)
+{
+	mx = max(max(u, v), mx);
+	if (adj.size() >= u + 1)
+		adj[u].push_back(make_pair(v, w)); // Add w to v’s list.
+	else {
+		vector<pair<int, double>> vec;
+		vec.push_back(make_pair(v, w));
+		adj.push_back(vec);
+	}
+}
+
+
+//______________________________________________________________
+
+
+void Graph::Dijkstra(int star,int end)
+{
+	// set a new pair to deal with priorty queue
+	pair<double, int > p; 
+
+	// vector to carry distance for evry node 
+	vector<double> dist;
+
+	// to store path
+	vector<string > path;
+
+	// Mark the start node as a smallest cost
+	p.first = 0, p.second = star;
+	Pirority_Q.push(p);
+	dist.push_back(0);
+	path.push_back("0");
+
+	// mark all other nodes with infinty
+	for (int i = 1;i <= mx;i++) {
+		dist.push_back(OO);
+		path.push_back("");
+	}
+	for (int i = adj.size();i <= mx;i++) {
+		vector<pair<int, double>>Vv;
+		adj.push_back(Vv);
+	}
+	// Dijkstra tech
+	while (!Pirority_Q.empty()) {
+		int mn = Pirority_Q.top().second;
+		Pirority_Q.pop();
+		//cout << mn << endl;
+		// loop for all neigh
+		for (int i = 0;i < adj[mn].size();i++) {
+			int v = adj[mn][i].first;
+			double weight = adj[mn][i].second;
+			// if better soull
+			if (dist[v] > dist[mn] + weight) {
+				// updating with new dist
+				dist[v] = dist[mn] + weight;
+				path[v] = path[mn] + to_string(v);
+				p.first = dist[v], p.second = v;
+				Pirority_Q.push(p);
+			}
+		}
+	}
+
+
+	cout << "Total Time = { "<<dist[end] << " } ." <<  endl;
+	for (int i = 0;i < path[end].size();i++) {
+		cout << "[" << path[end][i] << "]";
+		if (i < path[end].size() - 1)
+			cout << "-----";
+	}
+
+}
+
+
+
+//**************************************************************
+
+//************************************** Map Routing (((( MAIN )))) ***************************************************************
+int main() {
+	
+	/*
+	input example
+	7 edges / distance (km)  / speed  (km/h)
+	7
+    0 1 0.50 20
+    0 3 0.28 80
+    3 4 0.62 80
+    1 4 0.28 40
+    1 2 0.28 40
+    4 5 0.27 60
+    2 5 0.27 60
+
+	******************************
+
+	vertices
+	vert   /   coordinate
+    6
+    0 0.25 0.33
+    1 0.73 0.47
+    2 1.00 0.54
+    3 0.34 0.60
+    4 0.81 0.20
+    5 1.07 0.28
+
+	******************************
+
+	customer
+	coordinate for source & coordinate for destination & max walking distance
+	1
+    0.16 0.21 1.09 0.44 300
+	*/
+
+
+	// get whare customer standing 
+	double max_walk, x_source, x_distance, y_source, y_distance;
+	cout << "pleas enter where the customer stand & where he want to go !!" << endl;
+	cin >> x_source >> y_source >> x_distance >> y_distance >> max_walk;
+
+
+
+	// start and end point intializtion
+	int start_point, end_point;
+	double s_mn = OO, e_mn = OO;
+
+
+
+	// get the number of vertices
+	cout << "please enter the number of vertices !!" << endl;
+	int Num_vert; cin >> Num_vert;
+
+
+
+	// get the vertices
+	cout << "please enter all  vertices follwed by own coordinate !!" << endl;
+	for (int i = 0;i < Num_vert;i++) {
+		int v;
+		double x, y;
+		cin >> v >> x >> y;
+		//vert_coordinate.push_back(make_pair(x, y));
+		//cout << sqrt(pow(Abs(x - x_source), 2) + pow(Abs(y - y_source), 2)) << " -------- " << sqrt(pow(Abs(x - x_distance), 2) + pow(Abs(y - y_distance), 2));
+		if (sqrt(pow(Abs(x - x_source), 2) + pow(Abs(y - y_source), 2)) < s_mn)
+			s_mn = sqrt(pow(Abs(x - x_source), 2) + pow(Abs(y - y_source), 2)), start_point = v;
+		if (sqrt(pow(Abs(x - x_distance), 2) + pow(Abs(y - y_distance), 2)) < e_mn)
+			e_mn = sqrt(pow(Abs(x - x_source), 2) + pow(Abs(y - y_source), 2)), end_point = v;
+		//cout << "LOL" << endl;
+	}
+  
+  
+  
+	cout <<"pleas know that your start point is -> ( " <<start_point << " )  /  and your End point is -> ( " << end_point<< " ) .  " << endl;
+	// get number of edges
+  
+  
+	cout << "please enter the number of edgs !!" << endl;
+	int Num_edges;cin >> Num_edges;
+	Graph G;
+
+
+
+
+	// get all edges and push to adj
+	cout << "please enter the edgs !!" << endl;
+	for (int i = 0;i < Num_edges;i++) {
+		int u, v;
+		double d, s;
+		cin >> u >> v >> d >> s;
+		G.addEdge(u, v, d*s);
+	}
+	G.Dijkstra(start_point, end_point);
+
+	return 0;
+}
+
+/*
+
+output example
+
+pleas enter where the customer stand & where he want to go !!
+0.16 0.21 1.09 0.44 300
+please enter the number of vertices !!
+6
+please enter all  vertices follwed by own coordinate !!
+0 0.25 0.33
+1 0.73 0.47
+2 1.00 0.54
+3 0.34 0.60
+4 0.81 0.20
+5 1.07 0.28
+pleas know that your start point is -> ( 0 )  /  and your End point is -> ( 5 ) .
+please enter the number of edgs !!
+7
+please enter the edgs !!
+0 1 0.50 20
+0 3 0.28 80
+3 4 0.62 80
+1 4 0.28 40
+1 2 0.28 40
+4 5 0.27 60
+2 5 0.27 60
+Total Time = { 37.4 } .
+[0]-----[1]-----[2]-----[5]
+C:\Users\user\source\repos\Map_Routing\Debug\Map_Routing.exe (process 10864) exited with code 0.
+Press any key to close this window . . .
+
+*/
+
+
+
+
