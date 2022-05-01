@@ -1,0 +1,97 @@
+#include <SPI.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+
+//char* sid = "Colubris Networks";
+//char* pas ="0105761557";
+char* sid     = "Samir";
+char* password = "123456789a";
+WiFiServer server(80);
+void setup() 
+{
+  pinMode(D0, INPUT);
+  pinMode(D8, OUTPUT);
+  pinMode(D2,INPUT);
+  pinMode(D1,INPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  digitalWrite(D8,HIGH);
+  Serial.begin(9600);
+  Serial.println();
+  Serial.print("WiFi connecting to");
+  Serial.println(sid);
+  WiFi.begin(sid,password);
+  Serial.println();
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED) // loop until it conected to the sid  
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  digitalWrite(13, HIGH);
+  digitalWrite(12, HIGH);
+  Serial.println();
+  Serial.println("WIFI cnected success!");
+  Serial.print("ip adress:");
+  Serial.println(WiFi.localIP());     // show in serial monitor the esp ip in the network
+  server.begin();
+  
+}
+int llo ;
+int llO ;
+int lo ;
+int NumCount ;
+int up_down ;
+void UP_DOWN_FUN() {              // function to  get the status (up - down) of target
+  pinMode(D1, OUTPUT);
+  digitalWrite(D1,HIGH);
+  pinMode(D1, INPUT);
+  pinMode(D2, OUTPUT);
+  digitalWrite(D2,HIGH);
+  pinMode(D2, INPUT);
+  llo = digitalRead(D1);
+  llO = digitalRead(D2);
+  if(llo==LOW){up_down = 0 ;delay(300);}               //up
+  else if(llO==LOW){ up_down = 1 ;delay(300);}}        //down
+void COUNTER_FUN() {             // function for count the num of hit (can controlle sensitavity by give delay more than 300) 
+  // refresh pin D0
+  pinMode(D0, OUTPUT);
+  digitalWrite(D0,LOW);
+  pinMode(D0, INPUT);
+  lo = digitalRead(D0);
+  if(lo==HIGH){NumCount++;Serial.print(NumCount);delay(300);}
+  }
+void loop() {
+  up_down = 0;
+  COUNTER_FUN();
+  UP_DOWN_FUN();
+  WiFiClient client = server.available();  
+
+  if (client) {      
+    while(client) { 
+     String SendingText = "";         
+    COUNTER_FUN();
+    UP_DOWN_FUN();      
+    Serial.println("New Client."); 
+    String S = String(client.read());   // reciv
+    while(S[0]=='-'&&client){COUNTER_FUN();UP_DOWN_FUN();S = String(client.read());}
+    if(S == "49"){digitalWrite(13,HIGH);} // reciv up
+    if(S == "50"){digitalWrite(13,LOW);}  // reciv down
+    if(S == "48"){NumCount=0;}            // reciv clear
+    if(S == "53"||!client){break;}        // reciv close
+    if(S == "51"||!client){digitalWrite(12,HIGH);}        // reciv night
+    if(S == "52"||!client){digitalWrite(12,LOW);}         // reciv day
+    if(S == "59"||!client){}        // reciv high round
+    if(S == "58"||!client){}         // reciv low round
+    Serial.println(S); 
+    SendingText+=NumCount;
+    if(up_down==0){SendingText+="  UP";}
+    if(up_down==1){SendingText+="  DOWN";}
+    client.print(SendingText);             // send
+    }
+    client.stop();
+    Serial.println("Client Disconnected.");
+  }
+}
