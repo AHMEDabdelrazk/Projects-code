@@ -1,0 +1,187 @@
+/*********************************************************************************
+*    Auther : software dev - Ahmed Abdelrazik -              
+*    project name  : control_motor U( hardware_UI)              /-------------/
+*    project compo : keypad / LCD / A_nano / i2c_LCD           /  /////////  /   
+*                    nsno_holder / 3D_project box             /-------------/
+*    project descri: using UI (Keypad+LCD) to give time      /  O O O O O  /
+*                    to motor to go lift and after F go     /  O O O O O  /
+*                    right Or manual (R/L) .               /-------------/
+*
+*********************************************************************************/
+
+
+  /*||||||||||||||||||||||  Library  ||||||||||||||||||||||||||||||||||*/
+#include <Keypad.h>//Include library(library link in my blog)
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h> 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+  /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+
+
+  /*||||||||||||||||||||||  inti   ||||||||||||||||||||||||||||||||||*/
+const byte rows[4] = {2, 3, 4, 5};//connect to the row pinouts of the keypad
+const byte cols[4] = {6, 7, 8, 9};//connect to the column pinouts of the keypad 
+bool flg = 0 , f1=0 , f2=0 , sys = 0 ,frq_2 = 0 , frq_1 = 0 , rep = 0 , rest = 0 , stat=0;
+int FRQ2 = 0 ,FRQ1 = 0 , REP = 0;
+uint32_t tim1 = 1000 , tim2 = 100 ;
+const int ld = 10 , d2 = 11;
+LiquidCrystal_I2C lcd(0x27,16,2);
+char keys[4][4] = { //create 2D arry for keys
+  {'D', 'U', 'M', 'A'},
+  {'E', '9', '6', '3'},
+  {'0', '8', '5', '2'},
+  {'R', '7', '4', '1'},
+};
+Keypad mykeypad = Keypad(makeKeymap(keys), rows, cols, 4, 4);
+  /*||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+
+
+  
+  /*||||||||||||||||||||||  SETUP  ||||||||||||||||||||||||||||||||||*/
+void setup() 
+{
+  pinMode(ld,OUTPUT);
+  pinMode(d2,OUTPUT);
+  lcd.init(); lcd.backlight();
+  Serial.begin(9600);//enable serial monitor
+  lcd.println("press M or A     ");
+}  
+  /*|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+
+
+/******************************** LOOP ******************************************************/
+void loop() {
+  /*||||||||||||||||||||||  REST  ||||||||||||||||||||||||||||||||||*/
+  if(rest){
+    rest = 0;
+    flg = 0 , f1=0 , f2=0 ,sys = 0 , frq_2 = 0,stat = 0 , frq_1 = 0 , rep = 0 , rest = 0;
+    tim1 = 100 , tim2 = 100 ;
+    FRQ1 = 0 , REP = 0 , FRQ2 = 0;
+    digitalWrite(d2, LOW);
+    digitalWrite(ld, LOW);
+    lcd.clear();
+    lcd.println("press M or A     ");
+  } 
+  /*||||||||||||||||||||||  REST  ||||||||||||||||||||||||||||||||||*/
+  
+
+ //get key and put in to the veriable
+  char myKey = mykeypad.getKey();
+
+
+  /////////////////////////////////// take key ///////////////////////////////////////////////////////////
+  if(myKey&&myKey=='R')
+     rest = 1;
+  else if (myKey&&!flg) {           //check condition
+    //     M    0     //
+    if(myKey=='M'&&!flg){           // if user want Manual
+      sys=0;
+      flg=1;
+      lcd.clear();
+      lcd.print("press D or C");
+    } //   A    0     //
+    else if(myKey=='A'&&!flg){      // if user want an auto updoun
+      sys=1;
+      flg=1;
+      lcd.clear();
+      lcd.print("enter X                                 press #");
+      }
+    Serial.println(myKey);//print key 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  } //    1     0     1            // the program is set to work manually 1 //////////////////////////////////
+  else if(myKey&&!sys&&flg){
+    if(myKey=='U'){    
+       digitalWrite(ld, HIGH);
+       digitalWrite(d2, LOW);
+    }
+    else if(myKey=='D'){       
+       digitalWrite(ld, LOW);
+       digitalWrite(d2, HIGH);
+    }  
+     Serial.println(myKey);//print key 
+     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  } //    1      1     1    0     // the prog is set to Auto 2 /////////////////////////////////////////////////
+  else if(myKey&&sys&&flg&&!rep){
+      if(myKey=='E'&&!rep&&!frq_1&&!frq_2&&FRQ1>0){
+        frq_1=1;
+        lcd.clear();
+        lcd.print("enter Y                                 press #");
+      }
+      else if(myKey=='E'&&!rep&&!frq_2&&frq_1&&FRQ2>0){
+        frq_2=1;
+        lcd.clear();
+        lcd.print("enter Z                                 press #");
+      }
+      else if(myKey=='E'&&!rep&&frq_1&&REP>0){
+        rep=1;
+        lcd.clear();
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+      }///////////////////////////////////// take X  Y  Z ///////////////////////////////////////////////////////
+      else if(myKey<='9'&&myKey>='0'&&!frq_1&&FRQ1<=100){
+        FRQ1 = min(100,(FRQ1*10)+((int)(myKey)-48));
+        lcd.clear();
+        Serial.println(myKey);//print key 
+        lcd.print("enter X  ");
+        lcd.print(FRQ1);
+        lcd.print("                               press #");
+      }
+      else if(myKey<='9'&&myKey>='0'&&!frq_2&&FRQ2<=100){
+        FRQ2 = min(100,(FRQ2*10)+((int)(myKey)-48));
+        lcd.clear();
+        Serial.println(myKey);//print key 
+        lcd.print("enter Y  ");
+        lcd.print(FRQ2);
+        lcd.print("                               press #");
+      }
+      else if(myKey<='9'&&myKey>='0'&&frq_1&&frq_2&&!rep&&REP<=100){
+        REP = min(100,(REP*10)+((int)(myKey)-48));
+        lcd.clear();
+        lcd.print("enter Z  ");
+        lcd.print(REP);
+        tim1=tim2*REP;
+        lcd.print("                               press #");
+      }
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  } //  1     1    1    1    // construct loop in Auto mode 1 ////////////////////////////////////////////////////
+  else if(rep&&frq_1){
+            Serial.println(tim1);
+          
+          if(!f1&&!f2){  ////////////////////////// mode 1 ///////////////////////////////////////////////////////
+             digitalWrite(ld, HIGH);
+             digitalWrite(d2, LOW);
+             lcd.clear();
+             lcd.print("   ");
+             FRQ1--;
+             lcd.print(FRQ1);
+             f1=1,f2=0;
+             }
+          else if(f2&&f1){ //////////////////////// mode 2 ////////////////////////////////////////////////////////
+            Serial.println("lol");
+            digitalWrite(ld, LOW);
+            digitalWrite(d2, HIGH);
+            f1=0,f2=1;
+          }
+          else if(tim1)//////////////////////////// timer  ////////////////////////////////////////////////////////
+             tim1--;
+          else if(FRQ1){
+            Serial.println(FRQ1);
+            if(f1&&!f2)
+              f2=1,f1=1;
+            else 
+              f1=0,f2=0;
+            Serial.println(f1);
+            Serial.println(f2);
+            if(stat)
+            stat=0,tim1=300*REP + 400;
+            else stat=1,tim1=300*FRQ2 + 400;
+          }   
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////
+       ///////////////////////////////////// end of Auto loop /////////////////////////////////////////////////////
+  }
+}
+/*******************************************************************************************************************/
