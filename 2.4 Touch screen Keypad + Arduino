@@ -1,0 +1,137 @@
+#if 1
+
+#include <Adafruit_GFX.h>
+#include <MCUFRIEND_kbv.h>
+MCUFRIEND_kbv tft;
+#include <TouchScreen.h>
+//#define MINPRESSURE 10
+//#define MAXPRESSURE 1000
+
+// ALL Touch panels and wiring is DIFFERENT
+// copy-paste results from TouchScreen_Calibr_native.ino
+
+#define YP A2  
+#define XM A3 
+#define YM 8   
+#define XP 9   
+
+
+#define TS_MINX 125
+#define TS_MINY 85
+#define TS_MAXX 965
+#define TS_MAXY 905
+
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+
+#define LCD_RESET A4
+
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0
+#define WHITE   0xFFFF
+
+#define MINPRESSURE 1
+#define MAXPRESSURE 100000
+
+//Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+String Key[4][4] = {
+  {"7","8","9","A"},
+  {"4","5","6","B"},
+  {"1","2","3","C"},
+  {"R","0","E","D"}
+};
+
+String N1, N2, ShowSC, opt;
+bool updata=false;
+float answers=-1;
+
+void setup() {
+ Serial.begin(9600);
+ tft.reset();
+ uint16_t ID = tft.readID();
+ if (ID == 0xD3D3) ID = 0x9486; // write-only shield
+ tft.begin(ID);
+ tft.setRotation(0);   
+ tft.fillScreen(WHITE);
+
+ tft.fillRect(0, 80, 240, 240, WHITE);
+ tft.drawFastHLine(0, 80, 240, BLACK);
+ tft.drawFastHLine(0, 140, 240, BLACK);
+ tft.drawFastHLine(0, 200, 240, BLACK);
+ tft.drawFastHLine(0, 260, 240, BLACK);
+ tft.drawFastHLine(0, 320-1, 240, BLACK);
+
+ 
+ tft.drawFastVLine(0, 80, 240, BLACK);
+ tft.drawFastVLine(60, 80, 240, BLACK);
+ tft.drawFastVLine(120, 80, 240, BLACK);
+ tft.drawFastVLine(180, 80, 240, BLACK);
+ tft.drawFastVLine(240-1, 80, 240, BLACK);
+
+ for(int y=0;y<4;y++){
+  for(int x=0;x<4;x++){
+    tft.setCursor(22 + (60*x), 100 + (60*y));
+    tft.setTextSize(3);
+    tft.setTextColor(BLACK);
+    tft.println(Key[y][x]);
+  }
+ }
+ 
+  
+}
+
+char coun = '0';
+void loop() {
+   TSPoint p = waitTouch(); 
+   tft.fillRect(0, 0, 240, 80, BLACK);
+   tft.setCursor(10, 10);
+   tft.setTextSize(3);    
+   tft.setTextColor(GREEN);
+   
+   if(p.x<730&&p.x>590&&p.y<900&&p.y>740)coun = '7';   
+   else if(p.x<730&&p.x>590&&p.y<740&&p.y>550)coun = '8';
+   else if(p.x<730&&p.x>590&&p.y<550&&p.y>350)coun = '9';
+   else if(p.x<730&&p.x>590&&p.y<350&&p.y>160)coun = 'A';
+   else if(p.x<590&&p.x>440&&p.y<900&&p.y>740)coun = '4';   
+   else if(p.x<590&&p.x>440&&p.y<740&&p.y>550)coun = '5';
+   else if(p.x<590&&p.x>440&&p.y<550&&p.y>350)coun = '6';
+   else if(p.x<590&&p.x>440&&p.y<350&&p.y>160)coun = 'B';
+   else if(p.x<440&&p.x>290&&p.y<900&&p.y>740)coun = '1';   
+   else if(p.x<440&&p.x>290&&p.y<740&&p.y>550)coun = '2';
+   else if(p.x<440&&p.x>290&&p.y<550&&p.y>350)coun = '3';
+   else if(p.x<440&&p.x>290&&p.y<350&&p.y>160)coun = 'C';
+   else if(p.x<290&&p.x>140&&p.y<900&&p.y>740)coun = 'R';   
+   else if(p.x<290&&p.x>140&&p.y<740&&p.y>550)coun = '0';
+   else if(p.x<290&&p.x>140&&p.y<550&&p.y>350)coun = 'E';
+   else if(p.x<290&&p.x>140&&p.y<350&&p.y>160)coun = 'D';
+   tft.print(coun);   
+   delay(300);
+
+
+
+
+
+
+   
+}
+
+TSPoint waitTouch(){
+  TSPoint p;
+  p = ts.getPoint();
+  pinMode(XM, OUTPUT);
+  pinMode(YP, OUTPUT);
+  return p;
+}
+
+#endif
