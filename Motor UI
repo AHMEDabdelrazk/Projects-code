@@ -21,7 +21,7 @@
 
 
 
-  /*||||||||||||||||||||||  inti   ||||||||||||||||||||||||||||||||||*/
+  /*||||||||||||||||||||||  init   ||||||||||||||||||||||||||||||||||*/
 const byte rows[4] = {2, 3, 4, 5};//connect to the row pinouts of the keypad
 const byte cols[4] = {6, 7, 8, 9};//connect to the column pinouts of the keypad 
 bool flg = 0 , f1=0 , f2=0 , sys = 0 ,frq_2 = 0 , frq_1 = 0 , rep = 0 , rest = 0 , stat=0;
